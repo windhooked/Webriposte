@@ -188,9 +188,9 @@ func NodeStatus(node *Node) {
 	cmd.Wait()
 	//fmt.Printf("Node > %v\n", node)
 }
-func main() {
+func MetricsRun() {
 	m := make(map[int]string) //WRE GID lookup Map
-	readMapping("groupid.csv", m)
+	readMapping("C:/Temp/groupid.csv", m)
 
 	go func() {
 
@@ -200,21 +200,31 @@ func main() {
 
 				for _, v := range NodeList() {
 					NodeStatus(&v)
-					if v.Status == false {
-						nodeFailures.With(prometheus.Labels{"wrenode": fmt.Sprintf("%s:%d", m[v.GroupID], v.NodeID)}).Inc()
+					GroupName := m[v.GroupID]
+					if GroupName == "" {
+						GroupName = fmt.Sprintf("%d", v.GroupID)
 					}
-					nodeMarkerDelta.With(prometheus.Labels{"wrenode": fmt.Sprintf("%s:%d", m[v.GroupID], v.NodeID)}).Set(float64(v.MarkerDelta))
-					nodeTimeDelta.With(prometheus.Labels{"wrenode": fmt.Sprintf("%s:%d", m[v.GroupID], v.NodeID)}).Set(float64(v.LastUpdateDelta))
+					if GroupName == "0" {
+						GroupName = "CS"
+					}
+					if v.Status == false {
+						nodeFailures.With(prometheus.Labels{"wrenode": fmt.Sprintf("%s:%d", GroupName, v.NodeID)}).Inc()
+					}
+					nodeMarkerDelta.With(prometheus.Labels{"wrenode": fmt.Sprintf("%s:%d", GroupName, v.NodeID)}).Set(float64(v.MarkerDelta))
+					nodeTimeDelta.With(prometheus.Labels{"wrenode": fmt.Sprintf("%s:%d", GroupName, v.NodeID)}).Set(float64(v.LastUpdateDelta))
 				}
 			}
 		}
 	}()
 
-
+	//cpuTemp.Set(65.3)
+	//hdFailures.With(prometheus.Labels{"device": "/dev/sda"}).Inc()
 
 	// The Handler function provides a default handler to expose metrics
 	// via an HTTP server. "/metrics" is the usual endpoint for that.
 	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	go func() {
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	}()
 
 }
