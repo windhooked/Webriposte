@@ -7,3 +7,5 @@ go build main_lib.go
 gcc (i686-win32-dwarf-rev0, Built by MinGW-W64 project) 8.1.0
 
 Wrap native command line utilities for prometheus /grafana dashboard and alerting. 
+Compile:
+go build   -o wremonservice.exe service.go metrics_cmd.go
